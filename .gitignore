@@ -1,0 +1,45 @@
+# --- Data. Never committed. See scripts/fetch_data.py ---
+data/
+*.npy
+*.npz
+*.h5
+*.hdf5
+
+# --- Checkpoints & run outputs ---
+checkpoints/
+runs/
+outputs/
+wandb/
+mlruns/
+*.pt
+*.pth
+*.ckpt
+wp*_results.json
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# --- Envs ---
+.venv/
+venv/
+env/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- OS / editor ---
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.Zone.Identifier
+
+# --- Secrets ---
+.env
+kaggle.json

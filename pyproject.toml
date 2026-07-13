@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "urbanformer"
+version = "0.1.0"
+description = "Geometry-conditioned Transformer surrogate for urban canopy flow"
+requires-python = ">=3.8"
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "torch>=2.0",
+    "matplotlib>=3.7",
+    "tqdm>=4.65",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "nbstripout>=0.6", "ruff>=0.4"]
+
+[tool.setuptools.packages.find]
+include = ["urbanformer*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
