@@ -74,7 +74,7 @@ Trained on the core split, 2,000 fluid query points per case per step, token ord
 
 **Reading.** The first WP2 iteration collapsed to a near-mean field at R2 ≈ 0.06. Fourier features plus FiLM recovered a large fraction of that (0.06 -> 0.44), which proves the decoder's spectral bias was *a* bottleneck. It did not reach the U-Net. The residual gap is mean-pooling: one latent vector cannot carry per-location geometry. That is the decisive read, and it is what makes WP3's per-query cross-attention mandatory rather than optional.
 
-> **Open discrepancy to resolve before publishing.** WP5's `wp2-pooled-core-retrain` row scores R2 = 0.2921 on `core_test`, below the 0.4421 recorded here. The two runs should be reconciled (independent retrain, different seed and schedule) or the WP5 row relabeled. Do not ship the repo with both numbers unqualified.
+> **Resolved.** The two numbers are different training-set sizes, not the same measurement. This WP2 notebook trained on the original WP0 split (3,657 train / 785 test; the WP1 to WP4 convention) and scores 0.4421. WP5's `wp2-pooled-core-retrain` trained on the reduced core split (2,518 train / 541 test) so all four models see identical exposure, and scores 0.2921. Keep 0.4421 as WP2's standalone result and cite 0.2921 only inside the WP5 controlled comparison; never merge them.
 
 ---
 
