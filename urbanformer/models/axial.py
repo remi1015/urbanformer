@@ -18,7 +18,7 @@ scattered transposed. There is no column attention at all.
 `reshape` never raises on the buggy path, because B * Ny * Nx * D factors
 identically either way, on any grid, square or not. No shape check catches it and
 no provenance guard catches it, because the two variants differ in no config key
-and no tensor shape. Only `tests/test_axial_attention.py` catches it.
+and no tensor shape. Only `tests/test_axial.py` catches it.
 
 Every UF-F number produced before this fix, including the original headline
 R2 = 0.8284, came from a model with streamwise coupling only. Weights do not

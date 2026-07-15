@@ -2,7 +2,7 @@
 Fetch the raw dataset. Nothing under `data/` is tracked in git.
 
     python scripts/fetch_data.py --raw       # download urban_flow_dataset_5225.npz
-    python scripts/fetch_data.py --processed # then run notebooks/WP0_preprocessing.ipynb
+    python scripts/fetch_data.py --processed # then run notebooks/00_build_dataset.ipynb
 
 Requires a Kaggle API token at ~/.kaggle/kaggle.json (chmod 600).
 Get one from https://www.kaggle.com/settings/account -> Create New Token.
@@ -60,7 +60,7 @@ def main() -> int:
         for tag, ds in CKPT_DATASETS.items():
             _kaggle(ds, ROOT / "checkpoints" / tag)
 
-    print("\nDone. Next: notebooks/WP0_preprocessing.ipynb writes data/processed/.")
+    print("\nDone. Next: notebooks/00_build_dataset.ipynb writes data/processed/.")
     return 0
 
 

@@ -2,6 +2,8 @@
 
 A geometry-conditioned Transformer surrogate for urban canopy flow, built and ablated across six work packages on 5,225 lattice-Boltzmann cases.
 
+**In one sentence:** given the footprints and heights of the buildings on a city block, predict the mean wind speed at every point of the pedestrian-level plane, for any layout in the family, without running a fluid solver per layout.
+
 The model maps a **set of buildings** to a **continuous velocity field**, not one grid to another grid:
 
 ```
@@ -9,6 +11,10 @@ G_theta(B, m, x, y)  ->  u_bar(x, y, z = h_m / 2) / u_ref
 ```
 
 `B` is a variable-length set of building tokens `[x_c, y_c, w, l, h]`, `m` is an 8-dimensional global morphology vector, `(x, y)` is an arbitrary query point on the mid-canopy plane. One model covers the whole family of urban layouts. No per-layout retraining.
+
+![UrbanFormer-Field architecture](docs/figures/architecture.png)
+
+The permutation-invariant set encoder turns the buildings into memory; each decoder block gives every query point the right buildings (relative-geometry cross-attention) and then makes neighbouring queries cohere (axial self-attention over the grid). Regenerate this figure with `python scripts/make_arch_figure.py`.
 
 ---
 
@@ -25,6 +31,8 @@ All four models retrained from scratch on the identical core split (`core_train`
 
 UrbanFormer-Field is 1.63M parameters.
 
+![Core-test R² by model](docs/figures/core_test_r2.png)
+
 Out-of-distribution, across eight morphology tail regimes at the 95th percentile:
 
 | Model | core R² | mean OOD R² | robustness gap | worst regime | worst R² |
@@ -33,6 +41,8 @@ Out-of-distribution, across eight morphology tail regimes at the 95th percentile
 | WP4-morph | 0.8358 | 0.8173 | 0.0185 | γ↓ | 0.7991 |
 | U-Net | 0.7129 | 0.6972 | 0.0158 | γ↓ | 0.6568 |
 | WP2-pool | 0.2921 | 0.3014 | -0.0092 | γ↑ | 0.1053 |
+
+![OOD ΔR² heatmap](docs/figures/ood_delta_r2_heatmap.png)
 
 Per-regime ΔR², physics-oriented error metrics (wake RMSE, canyon RMSE, velocity-deficit RMSE, low/high-speed area errors), and the full per-WP write-up: [reports/RESULTS.md](reports/RESULTS.md).
 
@@ -65,16 +75,18 @@ The regression test is [`tests/test_axial.py`](tests/test_axial.py). Two of its 
 ## Quickstart
 
 ```bash
-git clone https://github.com/<user>/urbanformer.git && cd urbanformer
+git clone https://github.com/remi1015/urbanformer.git && cd urbanformer
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-pytest -q
+pytest -q                               # 68 passing, no data or GPU required
 
 # data is not in git
 pip install kaggle                      # token at ~/.kaggle/kaggle.json
 python scripts/fetch_data.py --all
-jupyter lab notebooks/WP0_preprocessing.ipynb
+jupyter lab notebooks/00_build_dataset.ipynb
 ```
+
+The full suite is 68 tests and runs on CPU with no dataset present: every module (losses, metrics, data contracts, all four models, the provenance guard, and the `uff-axial-fix` regression) is covered on synthetic inputs. `tests/test_axial.py` is where the bug story is pinned.
 
 ## Layout
 
@@ -90,12 +102,16 @@ urbanformer/           importable package, single source of truth
     pooled.py          WP2 pooled encoder, FiLM decoder
     axial.py           axial self-attention over the query grid
     field.py           UrbanFormer-Field (WP3/WP4)
-notebooks/             WP0..WP5, thin drivers over the package
-tests/                 pytest
+notebooks/             00..05, one per work package, thin drivers over the package
+tests/                 pytest, 68 tests, run on synthetic data (no dataset needed)
 reports/RESULTS.md     every number, per work package
-docs/figures/          galleries, spectral/range diagnostics, OOD heatmap
-splits/                core_{train,val,test}_cases.txt
-scripts/fetch_data.py  pulls raw data, splits, checkpoints from Kaggle
+reports/PORTING_NOTES.md  how the notebooks were ported into the tested package
+docs/figures/          architecture.png (committed); qualitative galleries, spectral/
+                       range diagnostics and the OOD heatmap regenerate via make_figures.py
+splits/                core_{train,val,test}_cases.txt, pulled by fetch_data.py --splits
+scripts/fetch_data.py       pulls raw data, splits, checkpoints from Kaggle
+scripts/make_arch_figure.py generates docs/figures/architecture.png (data-free)
+scripts/make_figures.py     regenerates the data-dependent figures (needs data + checkpoints)
 ```
 
 ## Data

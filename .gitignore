@@ -39,6 +39,7 @@ env/
 .idea/
 *.swp
 *.Zone.Identifier
+*:Zone.Identifier
 
 # --- Secrets ---
 .env
