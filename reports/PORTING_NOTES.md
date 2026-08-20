@@ -3,7 +3,16 @@
 This documents the port of the WP1–WP5 notebooks into the tested `urbanformer`
 package. Every function was extracted from the source of truth, diffed against
 the original on random inputs (bit-identical), and covered by an invariant test.
-Full suite: **68 passing**.
+Full suite: **80 passing**.
+
+> **Package layout note.** The importable `urbanformer/` package is the single
+> source of truth. The command-line drivers (`config.py`, `train.py`, `eval.py`)
+> live *inside* the package, so `python -m urbanformer.train` /
+> `python -m urbanformer.eval` work as documented and the notebooks, the CLI, and
+> the tests all import one implementation of every function. (An earlier layout
+> kept a second, stale copy of each module at the repo root and left the CLI
+> orphaned at the top level, where its `urbanformer.*` imports could not resolve;
+> that duplication has been removed.)
 
 ## Library modules added
 
@@ -16,6 +25,9 @@ Full suite: **68 passing**.
 | `models/field.py` | full UF-F stack (WP3), importing the fixed `axial.py` | `wp3.py` + `wp3last.pdf` | params 1,633,969 (flagship fingerprint) |
 | `data.py` | `UNetMidDataset` (WP1); `TokenDataset` + `collate_fn` (WP2); `TokenFieldDataset` + `collate_field` + query helpers (WP3) | `wp1.py`, WP2 PDF, `wp3.py` | tensor-contract diffs + tests |
 | `provenance.py` | checkpoint guard: `check_morph_provenance`, `strict_load`, `positional_remap`, `extract_state_dict` (WP5) | `wp5.py` | rejects `MORPH_MODE="none"` tagged `WP4-morph` |
+| `config.py` | per-WP config registry (`WP_CONFIGS`) + model factory (`build_model`) | WP1–WP4 configs | param-count fingerprints per WP |
+| `train.py` | `python -m urbanformer.train`; data-free `smoke_step` per WP | WP1–WP4 train loops | `tests/test_cli.py` runs `smoke_step` for every WP |
+| `eval.py` | `python -m urbanformer.eval`; grid-subsample + markdown-table helpers | `wp5.py` | pure helpers covered without data |
 
 ## Notebooks (import the library; orchestration + plotting only)
 
