@@ -22,7 +22,6 @@ from urbanformer.models.axial import (
     to_row_sequences,
 )
 
-
 NY, NX, D = 4, 16, 3  # deliberately non-square
 
 

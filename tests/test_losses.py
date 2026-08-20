@@ -89,18 +89,19 @@ def _field_fixture(seed=0, B=2, Ny=16, Nx=16):
 
 
 def test_field_loss_ignores_solid_cells():
-    from urbanformer.losses import masked_field_loss, make_radial_bins
+    from urbanformer.losses import make_radial_bins, masked_field_loss
     pred, target, fluid = _field_fixture()
     rbin = make_radial_bins(16, 16)
     base, _ = masked_field_loss(pred, target, fluid, rbin)
     solid = fluid == 0
-    pred2 = pred.clone(); pred2[solid] += 1e3 * torch.randn(int(solid.sum()))
+    pred2 = pred.clone()
+    pred2[solid] += 1e3 * torch.randn(int(solid.sum()))
     after, _ = masked_field_loss(pred2, target, fluid, rbin)
     assert torch.allclose(base, after)
 
 
 def test_field_loss_zero_on_perfect_prediction():
-    from urbanformer.losses import masked_field_loss, make_radial_bins
+    from urbanformer.losses import make_radial_bins, masked_field_loss
     _, target, fluid = _field_fixture(seed=1)
     rbin = make_radial_bins(16, 16)
     loss, parts = masked_field_loss(target.clone(), target, fluid, rbin)

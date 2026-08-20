@@ -25,10 +25,10 @@ def _random_height_map(rng, Ny, Nx, max_buildings=25):
     for _ in range(int(rng.integers(3, max_buildings))):
         h = int(rng.integers(2, 20))
         w = int(rng.integers(2, 12))
-        l = int(rng.integers(2, 12))
-        y0 = int(rng.integers(0, Ny - l))
+        ly = int(rng.integers(2, 12))          # spanwise (y) extent
+        y0 = int(rng.integers(0, Ny - ly))
         x0 = int(rng.integers(0, Nx - w))
-        hm[y0:y0 + l, x0:x0 + w] = np.maximum(hm[y0:y0 + l, x0:x0 + w], h)
+        hm[y0:y0 + ly, x0:x0 + w] = np.maximum(hm[y0:y0 + ly, x0:x0 + w], h)
     return hm
 
 

@@ -304,7 +304,8 @@ class TokenFieldDataset(Dataset):
         Ny, Nx = U.shape
         if AUG_REFLECT_Y and np.random.rand() < 0.5:
             U, fluid, hm = U[::-1].copy(), fluid[::-1].copy(), hm[::-1].copy()
-            tokens = tokens.copy(); tokens[:, 1] = 1.0 - tokens[:, 1]
+            tokens = tokens.copy()
+            tokens[:, 1] = 1.0 - tokens[:, 1]
         if AUG_TRANSLATE:
             sy, sx = np.random.randint(Ny), np.random.randint(Nx)
             U = np.roll(U, (sy, sx), axis=(0, 1))
@@ -339,10 +340,13 @@ class TokenFieldDataset(Dataset):
 def collate_field(batch):
     """Pad token sets to batch max; stack same-shape fields. pad mask: True = pad."""
     tok_l, q_l, f_l, p_l, t_l, fl_l = zip(*batch)
-    Bn = len(batch); N_max = max(t.shape[0] for t in tok_l)
+    Bn = len(batch)
+    N_max = max(t.shape[0] for t in tok_l)
     tokens = torch.zeros(Bn, N_max, TOKEN_DIM)
     pad = torch.ones(Bn, N_max, dtype=torch.bool)
     for i, t in enumerate(tok_l):
-        n = t.shape[0]; tokens[i, :n] = t; pad[i, :n] = False
+        n = t.shape[0]
+        tokens[i, :n] = t
+        pad[i, :n] = False
     return (tokens, pad, torch.stack(q_l), torch.stack(f_l),
             torch.stack(p_l), torch.stack(t_l), torch.stack(fl_l))

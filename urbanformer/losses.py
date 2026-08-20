@@ -40,9 +40,7 @@ def masked_mse(pred, target, mask):
 # ===========================================================================
 # WP3 field loss: masked tail-MSE + gradient + radial-spectral
 # ===========================================================================
-import math  # noqa: E402  (kept local to the WP3 section)
-
-import torch as _torch  # noqa: E402
+import torch as _torch  # noqa: E402  (kept local to the WP3 section)
 
 # --- WP3 loss configuration (the UF-F defaults that produced the flagship) ---
 TAIL_ALPHA    = 0.3     # tail up-weighting exponent (0 disables)
@@ -94,9 +92,12 @@ def masked_field_loss(pred, target, fluid, rbin=None, nbin=NBIN):
         mse = (se * m).sum() / denom
 
     # gradient (finite diff), masked by the intersection of valid neighbours
-    gx_p = pred[:, :, 1:] - pred[:, :, :-1]; gx_t = target[:, :, 1:] - target[:, :, :-1]
-    gy_p = pred[:, 1:, :] - pred[:, :-1, :]; gy_t = target[:, 1:, :] - target[:, :-1, :]
-    mx = (m[:, :, 1:] * m[:, :, :-1]); my = (m[:, 1:, :] * m[:, :-1, :])
+    gx_p = pred[:, :, 1:] - pred[:, :, :-1]
+    gx_t = target[:, :, 1:] - target[:, :, :-1]
+    gy_p = pred[:, 1:, :] - pred[:, :-1, :]
+    gy_t = target[:, 1:, :] - target[:, :-1, :]
+    mx = m[:, :, 1:] * m[:, :, :-1]
+    my = m[:, 1:, :] * m[:, :-1, :]
     grad = (((gx_p - gx_t) ** 2 * mx).sum() / mx.sum().clamp_min(1.0)
             + ((gy_p - gy_t) ** 2 * my).sum() / my.sum().clamp_min(1.0))
 
