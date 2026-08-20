@@ -8,8 +8,8 @@ Two invariants anchor this suite:
 """
 
 import numpy as np
-import torch
 import pytest
+import torch
 
 from urbanformer import data as D
 from urbanformer.morphology import SOLID_CODE
@@ -23,10 +23,10 @@ def _random_height_map(rng, Ny, Nx, max_buildings=20):
     for _ in range(int(rng.integers(1, max_buildings))):
         h = int(rng.integers(2, 20))
         w = int(rng.integers(2, 10))
-        l = int(rng.integers(2, 10))
-        y0 = int(rng.integers(0, Ny - l))
+        ly = int(rng.integers(2, 10))          # spanwise (y) extent
+        y0 = int(rng.integers(0, Ny - ly))
         x0 = int(rng.integers(0, Nx - w))
-        hm[y0:y0 + l, x0:x0 + w] = np.maximum(hm[y0:y0 + l, x0:x0 + w], h)
+        hm[y0:y0 + ly, x0:x0 + w] = np.maximum(hm[y0:y0 + ly, x0:x0 + w], h)
     return hm
 
 

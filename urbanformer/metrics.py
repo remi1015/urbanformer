@@ -93,9 +93,11 @@ def region_masks(solid, fluid):
     wake = np.zeros_like(solid, bool)
     for d in range(1, WAKE_D + 1):
         wake[:, d:] |= solid[:, :-d]                       # building d cells upstream (-x)
-    left = np.zeros_like(solid, bool); right = np.zeros_like(solid, bool)
+    left = np.zeros_like(solid, bool)
+    right = np.zeros_like(solid, bool)
     for d in range(1, CAN_D + 1):
-        left[d:, :] |= solid[:-d, :]; right[:-d, :] |= solid[d:, :]
+        left[d:, :] |= solid[:-d, :]
+        right[:-d, :] |= solid[d:, :]
     f = fluid > 0
     return (wake & f), (left & right & f)
 
@@ -130,7 +132,9 @@ def physics_metrics(P, T, M):
         A = f.sum()
         loA.append(abs((f & (p < LOW_THR)).sum() - (f & (t < LOW_THR)).sum()) / A)
         hiA.append(abs((f & (p > HI_THR)).sum() - (f & (t > HI_THR)).sum()) / A)
-    nanmean = lambda v: float(np.nanmean(v)) if len(v) else np.nan
+    def nanmean(v):
+        return float(np.nanmean(v)) if len(v) else np.nan
+
     return dict(plane_avg_err=nanmean(plane), wake_rmse=nanmean(wake),
                 canyon_rmse=nanmean(can), deficit_rmse=nanmean(defi),
                 low_area_err=nanmean(loA), high_area_err=nanmean(hiA))

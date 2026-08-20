@@ -23,7 +23,7 @@ from pathlib import Path
 import torch
 
 from urbanformer.config import build_model, count_params, get_config
-from urbanformer.losses import masked_field_loss, masked_mse, make_radial_bins
+from urbanformer.losses import make_radial_bins, masked_field_loss, masked_mse
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data" / "processed"

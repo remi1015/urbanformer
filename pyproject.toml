@@ -18,6 +18,14 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "nbstripout>=0.6", "ruff>=0.4"]
 
+# Console entry points so the documented CLI works after `pip install -e .`:
+#   urbanformer-train --wp 3 --smoke
+#   urbanformer-eval  --wp 5 --physics
+# (equivalent to `python -m urbanformer.train` / `python -m urbanformer.eval`).
+[project.scripts]
+urbanformer-train = "urbanformer.train:main"
+urbanformer-eval = "urbanformer.eval:main"
+
 [tool.setuptools.packages.find]
 include = ["urbanformer*"]
 
@@ -26,3 +34,12 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
+# Notebooks are the exploratory layer (kept clean with nbstripout, not ruff); the
+# linter targets the importable library, its tests, and the helper scripts.
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+# Ruff's classic default (pyflakes + the pycodestyle essentials) plus import
+# sorting. Pinned explicitly so the lint signal does not drift as ruff's default
+# rule set grows over releases.
+select = ["E4", "E7", "E9", "F", "I"]

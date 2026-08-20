@@ -26,7 +26,8 @@ from __future__ import annotations
 
 import numpy as np
 from scipy.ndimage import label
-from scipy.stats import skew as sp_skew, kurtosis as sp_kurtosis
+from scipy.stats import kurtosis as sp_kurtosis
+from scipy.stats import skew as sp_skew
 
 # --- configuration ---------------------------------------------------------
 SOLID_CODE = 8          # geom value marking a solid (building) cell at the mid-plane
