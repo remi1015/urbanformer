@@ -191,36 +191,6 @@ distribution, not of the representation.
 
 ---
 
-## A bug that changed the story
-
-`AxialSelfAttention`'s column branch reshaped `(B, Ny, Nx, D)` straight to
-`(B*Nx, Ny, D)` without first permuting to `(B, Nx, Ny, D)`. Each "column"
-sequence was in fact a row, and its attention output was written back into a
-column through the transposed view. The model attended over rows twice and
-scattered the second result transposed. There was no column attention at all.
-
-`reshape` never raised, because `B*Ny*Nx*D` factors identically either way, on
-any grid, square or not. No shape check catches it. The two variants differ in no
-config key and no tensor shape, so no provenance guard catches it either.
-
-- Every UF-F number before the fix, including the original headline R² = 0.8284
-  that beat the U-Net, came from a model with streamwise coupling only. **The
-  result stands. The mechanism attributed to it does not.**
-- Weights do not transfer, so WP3 is a retrain, not a reload.
-- WP3 and WP4 previously differed in two levers, the morphology token *and* axial
-  correctness. WP4's apparent `+0.386 ΔR²` was that confound. They now differ in
-  exactly one lever, which is what WP-isolation requires.
-
-The regression test is [`tests/test_axial.py`](tests/test_axial.py). Two of its
-ten assertions catch the bug. The other eight pass on the buggy code, including a
-gather-roundtrip identity check, because the forward and inverse were wrong
-symmetrically. Ordering, not shape, is the only thing separating the two
-variants. WP5 additionally enforces a checkpoint provenance guard (`WP`, `SPLIT`,
-`N_TRAIN`, `MORPH_MODE`, `ARCH_REV`) so a stale checkpoint cannot silently occupy
-a row in the comparison table. The guard exists because of this bug.
-
----
-
 ## Quickstart
 
 ```bash
