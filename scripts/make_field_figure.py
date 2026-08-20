@@ -217,62 +217,100 @@ def _render_real(args) -> int:
 
 # ---------------------------------------------------------------------------
 # SCHEMATIC mode: synthetic, clearly-labeled illustration (no data)
+# One building layout drives BOTH the input canopy (3-D boxes) and the output
+# field, so the two docs images are a consistent input -> output pair.
 # ---------------------------------------------------------------------------
-def _synthetic_case(seed: int = 3, Ny: int = 78, Nx: int = 78):
-    """A plausible-looking but entirely synthetic field. Wind blows along +x.
+def _synthetic_layout(seed: int = 3, Ny: int = 78, Nx: int = 78):
+    """A synthetic building set. Returns (buildings, solid, Ny, Nx).
 
-    NOT physics: buildings shelter a low-speed wake downstream (+x) and flow
-    accelerates through open lanes, purely to illustrate the output *format*.
+    Each building is a dict of grid-cell geometry ``{y0, x0, ny, nx, h}`` with a
+    normalized height ``h in [0, 1]`` — i.e. the same information a 5-D input
+    token carries. Buildings are scattered on a jittered grid (16-44 per case in
+    the real data; a similar count here).
+    """
+    rng = np.random.default_rng(seed)
+    solid = np.zeros((Ny, Nx), bool)
+    buildings = []
+    for cy in range(6, Ny - 8, 13):
+        for cx in range(6, Nx - 8, 13):
+            if rng.random() < 0.16:
+                continue
+            ny = int(rng.integers(6, 11))                   # spanwise (y) extent
+            nx = int(rng.integers(6, 11))                   # streamwise (x) extent
+            y0 = max(0, cy + int(rng.integers(-2, 3)))
+            x0 = max(0, cx + int(rng.integers(-2, 3)))
+            h = float(rng.uniform(0.12, 0.34))              # normalized roof height
+            solid[y0:y0 + ny, x0:x0 + nx] = True
+            buildings.append(dict(y0=y0, x0=x0, ny=ny, nx=nx, h=h))
+    return buildings, solid, Ny, Nx
+
+
+def _field_from_layout(buildings, solid, Ny, Nx, seed: int = 3):
+    """A plausible-looking but entirely synthetic field for that layout.
+
+    NOT physics: taller buildings shelter a stronger low-speed wake downstream
+    (+x) and flow accelerates through open lanes, purely to illustrate the output
+    *format*. Also returns a smoothed, slightly-biased "prediction" that mimics a
+    good-but-imperfect surrogate (sharp wakes soften, small errors at edges).
     """
     from scipy.ndimage import gaussian_filter
 
-    rng = np.random.default_rng(seed)
-    solid = np.zeros((Ny, Nx), bool)
+    rng = np.random.default_rng(seed + 100)
     u = np.full((Ny, Nx), 1.2, float)                       # free-stream base speed
+    for b in buildings:
+        y0, x0, ny, nx = b["y0"], b["x0"], b["ny"], b["nx"]
+        strength = 1.1 + 2.0 * b["h"]                       # taller -> stronger wake
+        for d in range(1, 26):                              # wake downstream (+x)
+            xx = x0 + nx + d
+            if xx >= Nx:
+                break
+            u[y0:y0 + ny, xx] -= strength * np.exp(-d / 11.0)
+        for dy in (-2, -1):                                 # lateral jets (open lanes)
+            if 0 <= y0 + dy:
+                u[y0 + dy, x0:min(Nx, x0 + nx + 10)] += 0.55 * strength
+        for dy in (0, 1):
+            if y0 + ny + dy < Ny:
+                u[y0 + ny + dy, x0:min(Nx, x0 + nx + 10)] += 0.55 * strength
 
-    # scatter rectangular buildings on a jittered grid
-    for cy in range(8, Ny - 8, 16):
-        for cx in range(8, Nx - 8, 16):
-            if rng.random() < 0.28:
-                continue
-            h = int(rng.integers(5, 9))
-            w = int(rng.integers(5, 9))
-            y0 = cy + int(rng.integers(-3, 3))
-            x0 = cx + int(rng.integers(-3, 3))
-            y0, x0 = max(0, y0), max(0, x0)
-            solid[y0:y0 + h, x0:x0 + w] = True
-            strength = rng.uniform(1.1, 1.8)
-            # low-speed wake downstream (+x, to the right); dips below 0 close in
-            # (recirculation), recovering with distance
-            for d in range(1, 26):
-                xx = x0 + w + d
-                if xx >= Nx:
-                    break
-                u[y0:y0 + h, xx] -= strength * np.exp(-d / 11.0)
-            # lateral jet alongside the building (flow squeezes through open lanes)
-            for dy in (-2, -1):
-                if 0 <= y0 + dy:
-                    u[y0 + dy, x0:min(Nx, x0 + w + 10)] += 0.55 * strength
-            for dy in (0, 1):
-                if y0 + h + dy < Ny:
-                    u[y0 + h + dy, x0:min(Nx, x0 + w + 10)] += 0.55 * strength
-
-    u += 0.55 * gaussian_filter(rng.standard_normal((Ny, Nx)), sigma=7)  # large-scale texture
+    u += 0.55 * gaussian_filter(rng.standard_normal((Ny, Nx)), sigma=7)
     u = gaussian_filter(u, sigma=1.0)
     fluid = (~solid).astype(float)
-
-    # a "prediction": slightly smoothed + a small smooth bias, i.e. a good-but-
-    # imperfect surrogate (sharper wakes soften, small errors at edges)
     pred = gaussian_filter(u, sigma=1.6) + 0.10 * gaussian_filter(
         rng.standard_normal((Ny, Nx)), sigma=8)
     return pred * fluid, u * fluid, fluid
 
 
-def _render_schematic() -> int:
-    pred, target, fluid = _synthetic_case()
+def _render_input_canopy(buildings, Ny, Nx, outfile) -> None:
+    """3-D box plot of the building set — the model's geometric input."""
+    fig = plt.figure(figsize=(7.2, 6.2))
+    ax = fig.add_subplot(111, projection="3d")   # 3d projection auto-registers (mpl>=3.2)
+    xs = [b["x0"] / Nx for b in buildings]
+    ys = [b["y0"] / Ny for b in buildings]
+    dxs = [b["nx"] / Nx for b in buildings]
+    dys = [b["ny"] / Ny for b in buildings]
+    dzs = [b["h"] for b in buildings]
+    zeros = [0.0] * len(buildings)
+    ax.bar3d(xs, ys, zeros, dxs, dys, dzs,
+             color="#3b74b8", edgecolor="#123b66", linewidth=0.6, shade=True)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_zlim(0, 1)
+    ax.set_zticks([0, 1 / 3, 2 / 3, 1])
+    ax.set_xlabel("x  (streamwise, wind →)", labelpad=8)
+    ax.set_ylabel("y  (spanwise)", labelpad=8)
+    ax.set_zlabel("z  (height / h_ref)", labelpad=4)
+    ax.set_title(f"Input: building set  B  ({len(buildings)} tokens "
+                 "[x_c, y_c, w, l, h])\nexample synthetic layout", fontsize=11)
+    ax.view_init(elev=26, azim=-58)
+    fig.tight_layout()
+    OUT.mkdir(parents=True, exist_ok=True)
+    fig.savefig(outfile, bbox_inches="tight", facecolor="white", dpi=150)
+    print("wrote", outfile)
+
+
+def _render_field_schematic(pred, target, fluid, outfile) -> None:
     solid = fluid == 0
     fig, axes = plt.subplots(1, 3, figsize=(13.5, 5.0))
-
     _panel(axes[0], target, solid, "“CFD” ground truth")
     _panel(axes[1], pred, solid, "“UrbanFormer-Field”")
     _error_panel(axes[2], pred, target, fluid)
@@ -288,9 +326,16 @@ def _render_schematic() -> int:
              ha="center", va="bottom", fontsize=8.4, color="#5b6570")
     fig.tight_layout(rect=(0, 0.05, 1, 0.94))
     OUT.mkdir(parents=True, exist_ok=True)
-    outfile = OUT / "field_schematic.png"
     fig.savefig(outfile, bbox_inches="tight", facecolor="white", dpi=150)
     print("wrote", outfile)
+
+
+def _render_schematic() -> int:
+    """Render the paired input-canopy and output-field illustrations."""
+    buildings, solid, Ny, Nx = _synthetic_layout()
+    _render_input_canopy(buildings, Ny, Nx, OUT / "input_canopy.png")
+    pred, target, fluid = _field_from_layout(buildings, solid, Ny, Nx)
+    _render_field_schematic(pred, target, fluid, OUT / "field_schematic.png")
     return 0
 
 

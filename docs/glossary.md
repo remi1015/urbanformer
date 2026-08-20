@@ -169,7 +169,7 @@ Fluids readers can skim this; ML readers can skim §1–§8 and read this.
 | **Coordinate decoding / neural field** | `models/field.py: UFFieldDecoder` | The decoder is a function of the query `(x, y)`, so the field can be sampled anywhere at any resolution (NeRF/SIREN-style). |
 | **Fourier features** | `FourierFeatures` (field & pooled) | Lift `(x, y)` through random sinusoids so an MLP can fit high-frequency structure, fighting spectral bias (Tancik et al. 2020). |
 | **FiLM conditioning** | `models/pooled.py: FiLMBlock` | Feature-wise affine modulation of the decoder by a global geometry vector (Perez et al. 2018). WP2 only. |
-| **Axial self-attention** | `models/axial.py: AxialSelfAttention` | Attention along rows then columns of the query grid — `O(Nx + Ny)` instead of `O(Nx·Ny)` — to make neighbouring predictions spatially coherent. The **load-bearing** lever of UF-F (and the subject of the [bug story](../README.md#a-bug-that-changed-the-story)). |
+| **Axial self-attention** | `models/axial.py: AxialSelfAttention` | Attention along rows then columns of the query grid — `O(Nx + Ny)` instead of `O(Nx·Ny)` — to make neighbouring predictions spatially coherent. The **load-bearing** lever of UF-F; pinned by the regression test `tests/test_axial.py`. |
 | **Masked / structural loss** | `losses.masked_field_loss` | Masked MSE (tail-weighted) + a finite-difference **gradient** term + a radial **spectral (PSD)** term, to punish blur and missing high-frequency energy. |
 
 ---

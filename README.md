@@ -49,6 +49,15 @@ This is **not** a fixed grid-to-grid image translation. It is closer to a
 render the field. One trained model covers the whole family of layouts — **no
 per-layout retraining.**
 
+The **input** `B` is a 3-D urban canopy — a set of building boxes on the ground
+plane, each carrying a footprint and a height:
+
+![Input: a 3-D building canopy](docs/figures/input_canopy.png)
+
+*Example synthetic layout (22 buildings). The predicted field for this same
+layout is the [output figure](#what-the-output-looks-like) below. Regenerate both
+with `python scripts/make_field_figure.py --schematic`.*
+
 **ML anchors for the architecture** (details in
 [`docs/glossary.md`](docs/glossary.md#9-ml-building-blocks-used-here)):
 
@@ -106,10 +115,11 @@ over the grid). Regenerate this figure with `python scripts/make_arch_figure.py`
 
 Each prediction is a 2-D scalar field on the mid-canopy plane: normalized wind
 speed per cell, with building cells masked out. The figure below shows the
-**format** — ground truth, model prediction, and their signed error — so an ML
-reader knows what a "field" means here: buildings are holes in the domain, slow
-**wakes** trail downstream of each building, and a surrogate's error concentrates
-at the sharp wake edges it tends to smooth.
+**format** — ground truth, model prediction, and their signed error — for the
+**same building layout as the [input canopy](#the-problem-in-ml-terms) above**, so
+an ML reader can see the whole `geometry → field` map: buildings are holes in the
+domain, slow **wakes** trail downstream of each building, and a surrogate's error
+concentrates at the sharp wake edges it tends to smooth.
 
 ![Schematic of the prediction format](docs/figures/field_schematic.png)
 
@@ -215,8 +225,8 @@ jupyter lab notebooks/00_build_dataset.ipynb
 
 The full suite is **80 tests** and runs on CPU with no dataset present: every
 module (losses, metrics, data contracts, all four models, the CLI/train step, the
-provenance guard, and the `uff-axial-fix` regression) is covered on synthetic
-inputs. `tests/test_axial.py` is where the bug story is pinned.
+provenance guard, and the axial-attention regression) is covered on synthetic
+inputs.
 
 ---
 
