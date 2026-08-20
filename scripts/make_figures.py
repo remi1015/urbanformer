@@ -6,10 +6,11 @@ are committed so the README is not promising images that are not in the tree.
 
     python scripts/make_figures.py
 
-The qualitative field galleries (predicted vs truth per model) are produced inside
-notebooks/05_cross_model_ood.ipynb, which needs the dataset and the four core-split
-checkpoints (see scripts/fetch_data.py). This script deliberately does not fabricate
-fields it cannot load.
+The qualitative field galleries (predicted vs truth per case) are produced by
+scripts/make_field_figure.py (or inside notebooks/05_cross_model_ood.ipynb), which
+need the dataset and a core-split checkpoint (see scripts/fetch_data.py). Neither
+this script nor that one fabricates fields it cannot load; make_field_figure.py has
+a clearly-labeled --schematic mode for a data-free illustration of the format.
 """
 from __future__ import annotations
 

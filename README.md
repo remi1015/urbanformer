@@ -102,6 +102,31 @@ over the grid). Regenerate this figure with `python scripts/make_arch_figure.py`
 
 ---
 
+## What the output looks like
+
+Each prediction is a 2-D scalar field on the mid-canopy plane: normalized wind
+speed per cell, with building cells masked out. The figure below shows the
+**format** — ground truth, model prediction, and their signed error — so an ML
+reader knows what a "field" means here: buildings are holes in the domain, slow
+**wakes** trail downstream of each building, and a surrogate's error concentrates
+at the sharp wake edges it tends to smooth.
+
+![Schematic of the prediction format](docs/figures/field_schematic.png)
+
+> ⚠️ **This image is a schematic** rendered from *synthetic* data — it is **not**
+> real CFD output and **not** a trained-model prediction. It exists only to show
+> the output layout, because the LBM dataset and the trained checkpoints are not
+> tracked in git. To render **real** `CFD | UrbanFormer-Field | error` panels for
+> actual cases, fetch the assets and run the same script without the flag:
+>
+> ```bash
+> python scripts/fetch_data.py --all            # dataset + core checkpoints
+> python scripts/make_field_figure.py           # real per-case triptychs -> docs/figures/
+> python scripts/make_field_figure.py --schematic   # regenerates the illustration above
+> ```
+
+---
+
 ## Results
 
 All four models were retrained from scratch on the identical core split
@@ -246,14 +271,15 @@ urbanformer/           the importable package — single source of truth
 notebooks/             00..05, one per work package, thin drivers over the package
 tests/                 pytest, 80 tests, run on synthetic data (no dataset needed)
 docs/glossary.md       fluid-mechanics ↔ ML dictionary (start here if new to CFD)
-docs/figures/          architecture.png (committed); the data-dependent figures
-                       regenerate via scripts/make_figures.py
+docs/figures/          architecture.png + field_schematic.png (committed, data-free);
+                       result tables + real field galleries regenerate from data
 reports/RESULTS.md     every number, per work package
 reports/PORTING_NOTES.md  how the notebooks were ported into the tested package
 splits/                core_{train,val,test}_cases.txt, pulled by fetch_data.py --splits
-scripts/fetch_data.py       pulls raw data, splits, checkpoints from Kaggle
-scripts/make_arch_figure.py generates docs/figures/architecture.png (data-free)
-scripts/make_figures.py     regenerates the data-dependent figures (needs data + checkpoints)
+scripts/fetch_data.py        pulls raw data, splits, checkpoints from Kaggle
+scripts/make_arch_figure.py  generates docs/figures/architecture.png (data-free)
+scripts/make_field_figure.py CFD-vs-prediction field panels (real; `--schematic` is data-free)
+scripts/make_figures.py      regenerates the result-table figures (data-free numbers)
 ```
 
 The **notebooks** (`00`–`05`) are the exploratory, per-work-package narrative.
