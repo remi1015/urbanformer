@@ -16,11 +16,12 @@ retraining, no new simulation.
 
 The four models compared in the study (see :mod:`urbanformer.config`):
 
-* ``WP1`` U-Net over a rasterized height map (image-to-image baseline).
-* ``WP2`` pooled set-Transformer + FiLM decoder (single global geometry vector).
-* ``WP3`` **UrbanFormer-Field** — per-query cross-attention to building tokens
-  plus axial self-attention over the query grid (the flagship).
-* ``WP4`` WP3 + an explicit global morphology token (a pre-registered null).
+* Stage 1 — **U-Net baseline**: raster CNN over a height map (image-to-image).
+* Stage 2 — **Pooled-token Transformer**: set encoder pooled to one vector + FiLM.
+* Stage 3 — **UrbanFormer-Field** (the flagship): per-query cross-attention to
+  building tokens plus axial self-attention over the query grid.
+* Stage 4 — **UrbanFormer-Field + morphology**: stage 3 plus a global morphology
+  token (a pre-registered null result).
 
 Public API (import-friendly re-exports)
 ---------------------------------------

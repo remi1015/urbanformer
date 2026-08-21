@@ -1,4 +1,4 @@
-"""Regression tests for :mod:`urbanformer.losses` (WP1).
+"""Regression tests for :mod:`urbanformer.losses` (stage 1 + stage 3 losses).
 
 Required invariant: the masked MSE ignores solid cells. The first two tests pin
 it directly (perturbing solid cells cannot move the loss; a prediction that is
@@ -77,7 +77,7 @@ def test_all_fluid_reduces_to_plain_mse():
 
 
 # ---------------------------------------------------------------------------
-# WP3 field loss: masked, solid-invariant, zero on a perfect prediction
+# UrbanFormer-Field loss (stage 3): masked, solid-invariant, zero on a perfect prediction
 # ---------------------------------------------------------------------------
 def _field_fixture(seed=0, B=2, Ny=16, Nx=16):
     g = torch.Generator().manual_seed(seed)

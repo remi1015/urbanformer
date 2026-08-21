@@ -1,7 +1,7 @@
 """
 Regenerate the summary result figures from the numbers in reports/RESULTS.md.
 
-These two figures are data-free: they render the WP5 core-test and OOD tables and
+These two figures are data-free: they render the generalization-study (stage 5) core-test and OOD tables and
 are committed so the README is not promising images that are not in the tree.
 
     python scripts/make_figures.py
@@ -24,20 +24,22 @@ import numpy as np
 
 OUT = Path(__file__).resolve().parent.parent / "docs" / "figures"
 
-# --- WP5 core_test, exactly as reported in reports/RESULTS.md ---
-MODELS = ["WP2-pool", "U-Net", "WP4-morph", "WP3-UFF"]
-R2 = {"WP2-pool": 0.2921, "U-Net": 0.7129, "WP4-morph": 0.8358, "WP3-UFF": 0.8461}
-COLOR = {"WP2-pool": "#c0564a", "U-Net": "#5f8a63",
-         "WP4-morph": "#7a5aa6", "WP3-UFF": "#4a7fb5"}
+# --- generalization-study core_test, exactly as reported in reports/RESULTS.md ---
+# Display labels are the readable model names (two-line where a bar label is long).
+MODELS = ["Pooled\n+ FiLM", "U-Net", "UF-Field\n+ morph", "UrbanFormer-\nField"]
+R2 = {"Pooled\n+ FiLM": 0.2921, "U-Net": 0.7129,
+      "UF-Field\n+ morph": 0.8358, "UrbanFormer-\nField": 0.8461}
+COLOR = {"Pooled\n+ FiLM": "#c0564a", "U-Net": "#5f8a63",
+         "UF-Field\n+ morph": "#7a5aa6", "UrbanFormer-\nField": "#4a7fb5"}
 
-# --- WP5 OOD, delta-R2 vs core_test (negative = degradation) ---
+# --- generalization-study OOD, delta-R2 vs core_test (negative = degradation) ---
 OOD_REGIMES = ["h_rms↑", "λf↑", "γ↑", "γ↓", "λp↑", "λp↓", "skew↑", "kurt↑"]
-OOD_MODELS = ["WP3-UFF", "WP4-morph", "U-Net", "WP2-pool"]
+OOD_MODELS = ["UrbanFormer-Field", "UF-Field + morph", "U-Net", "Pooled + FiLM"]
 OOD = np.array([
-    [-0.0124, -0.0069, -0.0208, -0.0320, -0.0351, -0.0223, -0.0073, -0.0014],  # WP3-UFF
-    [-0.0140, -0.0056, -0.0324, -0.0366, -0.0314, -0.0210, -0.0088, +0.0021],  # WP4-morph
+    [-0.0124, -0.0069, -0.0208, -0.0320, -0.0351, -0.0223, -0.0073, -0.0014],  # UrbanFormer-Field
+    [-0.0140, -0.0056, -0.0324, -0.0366, -0.0314, -0.0210, -0.0088, +0.0021],  # UF-Field + morph
     [-0.0216, +0.0193, -0.0128, -0.0561, -0.0529, +0.0018, -0.0153, +0.0115],  # U-Net
-    [-0.0289, +0.1997, -0.1869, +0.1082, +0.0900, -0.1095, -0.0389, +0.0402],  # WP2-pool
+    [-0.0289, +0.1997, -0.1869, +0.1082, +0.0900, -0.1095, -0.0389, +0.0402],  # Pooled + FiLM
 ])
 
 
@@ -81,7 +83,7 @@ def heatmap_ood() -> None:
     cb = fig.colorbar(im, ax=ax, fraction=0.025, pad=0.02)
     cb.ax.tick_params(labelsize=8)
     fig.text(0.012, 0.02,
-             "WP2-pool's positive deltas are a collapse artifact, not robustness "
+             "Pooled+FiLM's positive deltas are a collapse artifact, not robustness "
              "(it sits near the conditional mean). See reports/RESULTS.md.",
              fontsize=7.6, color="#5b6570")
     fig.tight_layout(rect=(0, 0.05, 1, 1))

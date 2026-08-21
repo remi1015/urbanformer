@@ -1,4 +1,4 @@
-"""Regression tests for :mod:`urbanformer.provenance` (WP5).
+"""Regression tests for :mod:`urbanformer.provenance` (stage 5).
 
 Required invariant: a MORPH_MODE="none" checkpoint tagged "WP4-morph" is
 rejected. The morphology conclusion depends on the treatment checkpoint really

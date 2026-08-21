@@ -1,7 +1,7 @@
 """Data layer: building tokens, raw per-case fields, and layout splits.
 
-WP0 scope. This module holds the pure, testable data-preparation functions the
-WP0 preprocessing notebook calls:
+Data-preparation (stage 0) scope. This module holds the pure, testable
+data-preparation functions the preprocessing notebook calls:
 
 * :func:`build_tokens`  -- per-building tokens normalized to ``[0, 1]``.
 * :func:`case_fields`   -- the raw per-case fields that need no morphology
@@ -12,8 +12,8 @@ WP0 preprocessing notebook calls:
 
 The train-time ``torch`` datasets are ported here as they are reached:
 
-* :class:`UNetMidDataset` (WP1) -- raster inputs for the U-Net baseline.
-* :class:`TokenDataset` + :func:`collate_fn` (WP2) -- building tokens plus
+* :class:`UNetMidDataset` (stage 1) -- raster inputs for the U-Net baseline.
+* :class:`TokenDataset` + :func:`collate_fn` (stage 2) -- building tokens plus
   sampled fluid query points, padded/collated for the pooled Transformers.
 """
 
@@ -83,8 +83,8 @@ def make_splits(n_cases, seed=42, fractions=(0.70, 0.15, 0.15)):
     """Split case indices 70 / 15 / 15 by full urban layout.
 
     Splitting on whole layouts (not grid points) prevents leakage: no case ever
-    lands in two splits. Reproducible from ``seed`` and identical to the WP0
-    notebook's split so already-generated split files stay valid.
+    lands in two splits. Reproducible from ``seed`` and identical to the
+    preprocessing notebook's split so already-generated split files stay valid.
 
     The test fraction is the remainder, so ``fractions[2]`` is advisory; train
     and val counts use ``floor(fraction * n_cases)`` exactly as the notebook does.
@@ -108,7 +108,7 @@ def make_splits(n_cases, seed=42, fractions=(0.70, 0.15, 0.15)):
 
 
 class UNetMidDataset(Dataset):
-    """One case -> (x, y, mask) for the WP1 U-Net baseline.
+    """One case -> (x, y, mask) for the U-Net baseline (stage 1).
 
     x    : (4, Ny, Nx) float32 -- [height_map, footprint_mask, x_grid, y_grid]
     y    : (Ny, Nx)    float32 -- U_mid (u / u_ref)
@@ -116,7 +116,7 @@ class UNetMidDataset(Dataset):
 
     Coordinate channels use the cell-centered convention
     ``(col + 0.5) / Nx`` and ``(row + 0.5) / Ny``. Each ``case_dir`` holds the
-    per-case ``.npy`` fields written by WP0.
+    per-case ``.npy`` fields written by data preparation (stage 0).
     """
 
     def __init__(self, case_dirs):
@@ -152,7 +152,7 @@ class UNetMidDataset(Dataset):
 
 
 class TokenDataset(Dataset):
-    """Building-token dataset for the pooled Transformer (WP2/WP3).
+    """Building-token dataset for the pooled Transformer (stages 2/3).
 
     Returns ``(tokens [N_b, 5], query_xy [K_pts, 2], target [K_pts])``.
 
@@ -184,7 +184,7 @@ class TokenDataset(Dataset):
         fluid  = np.load(case_dir / 'fluid_mask_mid.npy').astype(np.float32)   # [Ny, Nx]
         Ny, Nx = U_mid.shape
 
-        # Cell-centred coordinates (same convention as WP1).
+        # Cell-centred coordinates (same convention as the U-Net dataset).
         x_ch = (np.arange(Nx, dtype=np.float32) + 0.5) / Nx
         y_ch = (np.arange(Ny, dtype=np.float32) + 0.5) / Ny
         yy, xx = np.meshgrid(y_ch, x_ch, indexing='ij')                       # [Ny, Nx] each
@@ -243,7 +243,7 @@ def collate_fn(batch):
 
 
 # ===========================================================================
-# WP3 full-grid dataset for UrbanFormer-Field
+# Full-grid dataset for UrbanFormer-Field (stage 3)
 # ===========================================================================
 import torch.nn.functional as _F  # noqa: E402
 

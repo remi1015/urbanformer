@@ -1,4 +1,4 @@
-"""Regression tests for :mod:`urbanformer.morphology` (WP0).
+"""Regression tests for :mod:`urbanformer.morphology` (stage 0, data preparation).
 
 Two invariants anchor this suite:
 

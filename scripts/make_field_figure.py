@@ -41,9 +41,12 @@ SPLITS_DIR = ROOT / "splits"
 CKPT_DIR = ROOT / "checkpoints"
 OUT = ROOT / "docs" / "figures"
 
-# Checkpoint directory per UF-F tag (fetch_data.py unzips into these).
+# Checkpoint directory per UrbanFormer-Field checkpoint tag (fetch_data.py unzips
+# into these). The tag is the stable provenance label; NAMES gives the readable
+# name shown on the figure.
 CKPT_DIRS = {"WP3-UFF": CKPT_DIR / "wp3_uff", "WP4-morph": CKPT_DIR / "wp4_morph"}
 EXPECTED_MORPH = {"WP3-UFF": "none", "WP4-morph": "token"}
+NAMES = {"WP3-UFF": "UrbanFormer-Field", "WP4-morph": "UrbanFormer-Field + morphology"}
 
 
 # ---------------------------------------------------------------------------
@@ -210,7 +213,7 @@ def _render_real(args) -> int:
 
     rows = [(P[i], T[i], M[i]) for i in picks]
     outfile = OUT / f"field_prediction_{tag.lower().replace('-', '_')}.png"
-    _render_rows(rows, f"{tag}: CFD ground truth vs prediction "
+    _render_rows(rows, f"{NAMES[tag]}: CFD ground truth vs prediction "
                        f"({args.split}, fluid cells only)", outfile, subtitles=labels)
     return 0
 

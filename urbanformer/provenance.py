@@ -1,6 +1,6 @@
-"""Checkpoint provenance and strict-loading guards (WP5).
+"""Checkpoint provenance and strict-loading guards (stage 5).
 
-The WP5 comparison scores four checkpoints side by side. A mislabeled
+The generalization study scores four checkpoints side by side. A mislabeled
 checkpoint (for example a ``MORPH_MODE="none"`` control saved under the
 ``WP4-morph`` treatment tag) would silently corrupt the morphology conclusion,
 so every checkpoint is verified before it is trusted:
@@ -9,7 +9,7 @@ so every checkpoint is verified before it is trusted:
   must match its tag (``WP3-UFF`` -> ``"none"``, ``WP4-morph`` -> ``"token"``).
 * :func:`extract_state_dict` -- unwrap raw / ``{"model": ...}`` checkpoints.
 * :func:`strict_load` / :func:`positional_remap` -- key-exact load, with a
-  shape-checked positional fallback for the reconstructed WP2 class.
+  shape-checked positional fallback for the reconstructed pooled-model class.
 """
 
 from __future__ import annotations

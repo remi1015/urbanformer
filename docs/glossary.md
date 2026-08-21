@@ -104,9 +104,9 @@ token order. Variable set size (16–44) is handled by padding + a boolean
 
 "Morphology" = summary statistics of the building layout. The canonical **8-vector**
 (`morphology.MORPHOLOGY_KEYS`, order matters) plus an **alignedness family** used
-for ablations. In ML terms these are *hand-engineered global features*; WP4 tests
-whether adding them helps, and finds they are **redundant** given the token set
-(the encoder can compute them itself).
+for ablations. In ML terms these are *hand-engineered global features*; the
+morphology variant (stage 4) tests whether adding them helps, and finds they are
+**redundant** given the token set (the encoder can compute them itself).
 
 ### The canonical 8-vector
 
@@ -168,8 +168,8 @@ Fluids readers can skim this; ML readers can skim §1–§8 and read this.
 | **Query→building cross-attention** | `models/field.py: RelCrossAttention` | Each output coordinate attends to the buildings, with a **relative-geometry bias** (anisotropic streamwise/spanwise + an upstream/downstream linear term). Conditioning like a Perceiver IO decoder. |
 | **Coordinate decoding / neural field** | `models/field.py: UFFieldDecoder` | The decoder is a function of the query `(x, y)`, so the field can be sampled anywhere at any resolution (NeRF/SIREN-style). |
 | **Fourier features** | `FourierFeatures` (field & pooled) | Lift `(x, y)` through random sinusoids so an MLP can fit high-frequency structure, fighting spectral bias (Tancik et al. 2020). |
-| **FiLM conditioning** | `models/pooled.py: FiLMBlock` | Feature-wise affine modulation of the decoder by a global geometry vector (Perez et al. 2018). WP2 only. |
-| **Axial self-attention** | `models/axial.py: AxialSelfAttention` | Attention along rows then columns of the query grid — `O(Nx + Ny)` instead of `O(Nx·Ny)` — to make neighbouring predictions spatially coherent. The **load-bearing** lever of UF-F; pinned by the regression test `tests/test_axial.py`. |
+| **FiLM conditioning** | `models/pooled.py: FiLMBlock` | Feature-wise affine modulation of the decoder by a global geometry vector (Perez et al. 2018). Pooled-token model (stage 2) only. |
+| **Axial self-attention** | `models/axial.py: AxialSelfAttention` | Attention along rows then columns of the query grid — `O(Nx + Ny)` instead of `O(Nx·Ny)` — to make neighbouring predictions spatially coherent. The **load-bearing** lever of UrbanFormer-Field; pinned by the regression test `tests/test_axial.py`. |
 | **Masked / structural loss** | `losses.masked_field_loss` | Masked MSE (tail-weighted) + a finite-difference **gradient** term + a radial **spectral (PSD)** term, to punish blur and missing high-frequency energy. |
 
 ---
@@ -182,7 +182,7 @@ Fluids readers can skim this; ML readers can skim §1–§8 and read this.
 | **R²** | Fraction of target variance explained, pooled over all fluid cells of the test set (not averaged per case). `1.0` perfect, `0.0` = predicting the mean. |
 | **rel-L2** | `‖pred − target‖₂ / ‖target‖₂` over fluid cells — a scale-free relative error. |
 | **Spearman** | Rank correlation between predicted and true speeds; robust to monotone distortions. |
-| **Robustness gap** | `core R² − mean OOD R²`. Small = degrades little out of distribution. (A *negative* gap can be a collapse artifact — see WP2 in `reports/RESULTS.md`.) |
+| **Robustness gap** | `core R² − mean OOD R²`. Small = degrades little out of distribution. (A *negative* gap can be a collapse artifact — see the Pooled-token model in `reports/RESULTS.md`.) |
 
 ---
 
@@ -195,7 +195,7 @@ Fluids readers can skim this; ML readers can skim §1–§8 and read this.
 | "for any layout, no re-simulation" | one trained model; generalize across the input set distribution |
 | "masked to fluid cells" | loss/metrics computed on a boolean mask; ignore building cells |
 | "LBM ground truth" | expensive deterministic label oracle |
-| "morphology descriptors" | hand-engineered global features (found redundant in WP4) |
+| "morphology descriptors" | hand-engineered global features (found redundant by the morphology variant) |
 | "wake / canyon / deficit RMSE" | error on physically-defined sub-regions of the output |
 | "OOD morphology tails (λp↑, γ↓, …)" | held-out slices at the 95th percentile of a geometry statistic |
 

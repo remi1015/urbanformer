@@ -1,4 +1,4 @@
-"""Regression tests for :mod:`urbanformer.metrics` (WP5).
+"""Regression tests for :mod:`urbanformer.metrics` (stage 5).
 
 Required invariant: ``R2(y, y) == 1.0`` -- a perfect prediction scores exactly 1.
 The suite also pins that solid cells are excluded from every metric and that the
@@ -81,7 +81,7 @@ def test_r2_matches_closed_form():
 
 
 # ---------------------------------------------------------------------------
-# WP5 physics metrics
+# Stage-5 physics metrics
 # ---------------------------------------------------------------------------
 def test_physics_metrics_zero_on_perfect_prediction():
     from urbanformer.metrics import physics_metrics

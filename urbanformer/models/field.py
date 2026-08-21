@@ -1,4 +1,4 @@
-"""UrbanFormer-Field: the flagship geometry-conditioned field surrogate (WP3).
+"""UrbanFormer-Field: the flagship geometry-conditioned field surrogate (stage 3).
 
 Encoder (permutation-invariant set Transformer over building tokens) -> memory.
 Decoder = ``RESIDUAL_DEPTH`` residual blocks of {relative-geometry cross-attention
@@ -15,7 +15,7 @@ is the fix behind the flagship R2 = 0.8461. The module has 1,633,969 parameters
 in the default configuration.
 
 The module-level flags are the ablation levers; all default to the full UF-F
-configuration. Toggle one at a time to reproduce the WP3 ablation matrix.
+configuration. Toggle one at a time to reproduce the ablation matrix.
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ import torch.nn.functional as F
 
 from urbanformer.models.axial import AxialSelfAttention
 
-# --- token / model dims (carried from WP2/WP3 unchanged) ---
+# --- token / model dims (carried from the pooled/field models unchanged) ---
 TOKEN_DIM     = 5          # [x_c, y_c, w, l, h]
 D_MODEL       = 128
 N_HEADS       = 4
@@ -46,7 +46,7 @@ PATCH           = 9
 QUERY_KNN       = True      # (C) scalar nearest-building feats [h_local, d_near, h_near, d_up]
 NUM_QUERY_FEATS = 4
 RESIDUAL_DEPTH  = 4        # (F) number of decoder blocks (coarse -> fine)
-MULTISCALE      = False    # (E) prepend a global morphology token (WP4 vector plugs in here)
+MULTISCALE      = False    # (E) prepend a global morphology token (morphology vector plugs in here)
 GEO_BIAS        = True     # isotropic distance bias, used only when REL_COORD=False
 AXIAL_POS       = True     # learned row/col positional embeddings inside axial attn
 
@@ -80,7 +80,7 @@ class TokenEncoder(nn.Module):
     def forward(self, tokens, padding_mask):
         h = self.embed(tokens)
         if MULTISCALE:
-            # self-contained global morphology token from per-set stats (WP4 vector plugs in here)
+            # self-contained global morphology token from per-set stats (morphology vector plugs in here)
             real = (~padding_mask).float().unsqueeze(-1)                # (B, N, 1)
             n = real.sum(1).clamp_min(1.0)
             mean = (tokens * real).sum(1) / n

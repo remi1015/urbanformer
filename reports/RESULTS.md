@@ -1,10 +1,16 @@
-# Results, work package by work package
+# Results, stage by stage
 
 Every metric is computed over fluid cells only (`fluid_mask_mid == 1`). `R2` is over the pooled fluid cells of the test set, not averaged per case.
 
+**Stages** (the code and notebooks label these `WP0`–`WP5`, "work package"):
+0 data preparation · 1 **U-Net baseline** · 2 **Pooled-token Transformer** ·
+3 **UrbanFormer-Field** (flagship) · 4 **UrbanFormer-Field + morphology** ·
+5 **Generalization study**. Checkpoint tags (`WP3-UFF`, `WP4-morph`, …) are the
+stable internal identifiers written into each checkpoint's metadata.
+
 ---
 
-## WP0 — Preprocessing
+## Stage 0 — Data preparation (preprocessing)
 
 5,225 cases, 78 x 78, `H_REF = 0.870`, `SOLID_CODE = 8`, `DX = 1.0` (isotropic lattice units).
 
@@ -39,7 +45,7 @@ Split: by full urban layout, 70/15/15, seed 42, giving 3,657 / 783 / 785. Overla
 
 ---
 
-## WP1 — U-Net baseline
+## Stage 1 — U-Net baseline
 
 3-level U-Net, 4 input channels (`height_map`, `footprint_mask`, `x_grid`, `y_grid`), masked MSE, Adam, lr 1e-3, batch 8, early stop patience 10. `F.interpolate` after each up-conv so the odd 78 -> 39 -> 19 -> 9 pyramid round-trips.
 
@@ -53,11 +59,11 @@ Early stop at epoch 18, best val 0.7031 at epoch 8.
 
 Per-case: best RMSE 0.2773, worst 1.8783, 95th percentile 1.2773.
 
-*(These are on the original WP0 split. The WP5 core-split retrain of the same architecture gives R2 = 0.7129.)*
+*(These are on the original split. The stage-5 core-split retrain of the same architecture gives R2 = 0.7129.)*
 
 ---
 
-## WP2 — Pooled building-token Transformer
+## Stage 2 — Pooled-token Transformer
 
 Encoder: 3 layers, `d_model = 128`, 4 heads, FF 256. Mean-pool to `z_geom`. Two decoders compared:
 
@@ -68,17 +74,17 @@ Trained on the core split, 2,000 fluid query points per case per step, token ord
 
 | Model | RMSE | MAE | R2 |
 |---|---:|---:|---:|
-| WP1 U-Net (raster) | 0.8217 | 0.4821 | 0.7194 |
-| WP2 pooled, base | 1.2796 | 0.8635 | 0.3195 |
-| WP2 pooled + Fourier/FiLM | 1.1587 | 0.7722 | 0.4421 |
+| U-Net (raster) | 0.8217 | 0.4821 | 0.7194 |
+| Pooled, base | 1.2796 | 0.8635 | 0.3195 |
+| Pooled + Fourier/FiLM | 1.1587 | 0.7722 | 0.4421 |
 
-**Reading.** The first WP2 iteration collapsed to a near-mean field at R2 ≈ 0.06. Fourier features plus FiLM recovered a large fraction of that (0.06 -> 0.44), which proves the decoder's spectral bias was *a* bottleneck. It did not reach the U-Net. The residual gap is mean-pooling: one latent vector cannot carry per-location geometry. That is the decisive read, and it is what makes WP3's per-query cross-attention mandatory rather than optional.
+**Reading.** The first Pooled-token iteration collapsed to a near-mean field at R2 ≈ 0.06. Fourier features plus FiLM recovered a large fraction of that (0.06 -> 0.44), which proves the decoder's spectral bias was *a* bottleneck. It did not reach the U-Net. The residual gap is mean-pooling: one latent vector cannot carry per-location geometry. That is the decisive read, and it is what makes UrbanFormer-Field's per-query cross-attention mandatory rather than optional.
 
-> **Resolved.** The two numbers are different training-set sizes, not the same measurement. This WP2 notebook trained on the original WP0 split (3,657 train / 785 test; the WP1 to WP4 convention) and scores 0.4421. WP5's `wp2-pooled-core-retrain` trained on the reduced core split (2,518 train / 541 test) so all four models see identical exposure, and scores 0.2921. Keep 0.4421 as WP2's standalone result and cite 0.2921 only inside the WP5 controlled comparison; never merge them.
+> **Resolved.** The two numbers are different training-set sizes, not the same measurement. This Pooled-token notebook trained on the original split (3,657 train / 785 test; the stage 1–4 convention) and scores 0.4421. The stage-5 `wp2-pooled-core-retrain` trained on the reduced core split (2,518 train / 541 test) so all four models see identical exposure, and scores 0.2921. Keep 0.4421 as the Pooled-token standalone result and cite 0.2921 only inside the stage-5 controlled comparison; never merge them.
 
 ---
 
-## WP3 — UrbanFormer-Field (UF-F)
+## Stage 3 — UrbanFormer-Field (the flagship)
 
 ```
 G_theta(B, x, y) -> u_bar(x, y, h_m/2) / U_ref
@@ -95,7 +101,7 @@ Levers, each behind a flag so the ablation matrix attributes each gain:
 | query-local height patch + scalars | `QUERY_PATCH`, `QUERY_KNN` | information-poor query, train-R2 ceiling |
 | residual refinement depth | `RESIDUAL_DEPTH` | range compression (coarse -> sharp) |
 | gradient + spectral loss | `SPECTRAL_LOSS` | missing high-frequency energy |
-| global morphology token | `MULTISCALE` | meso/global scale (WP4 bridge) |
+| global morphology token | `MULTISCALE` | meso/global scale (morphology-variant bridge) |
 
 1,633,969 parameters. Best val 0.3871 at epoch 33.
 
@@ -106,29 +112,29 @@ Levers, each behind a flag so the ablation matrix attributes each gain:
 | Test R2 | 0.8461 |
 | rel-L2 | 0.3553 |
 
-**Reading.** The diagnostics that motivated UF-F showed attention was already well-structured in the WP2 iterations (entropy 0.85, top-1 0.13) while R2 sat flat at 0.471. The failure was never attention placement. It was spatial coherence plus range compression: predictions collapsed into a narrow band, channels and wakes blurred, train R2 plateaued near 0.60 from coordinates alone. Axial self-attention over the query grid is what fixes coherence, and it is the load-bearing lever.
+**Reading.** The diagnostics that motivated UrbanFormer-Field showed attention was already well-structured in the Pooled-token iterations (entropy 0.85, top-1 0.13) while R2 sat flat at 0.471. The failure was never attention placement. It was spatial coherence plus range compression: predictions collapsed into a narrow band, channels and wakes blurred, train R2 plateaued near 0.60 from coordinates alone. Axial self-attention over the query grid is what fixes coherence, and it is the load-bearing lever.
 
 The hypothesis going in was that the object-based field would still trail the U-Net's 0.719. It did not. That hypothesis is falsified.
 
 ### Architecture revision `uff-axial-fix`
 
-See the bug section of the top-level README. In short: the column branch of `AxialSelfAttention` never permuted `(B, Ny, Nx, D) -> (B, Nx, Ny, D)` before reshaping, so it attended over rows twice and scattered the second result transposed. `reshape` never raised because the element count factors identically. Every UF-F number prior to this run, including the original headline R2 = 0.8284, was produced with streamwise coupling only.
+Pinned by the regression test [`tests/test_axial.py`](../tests/test_axial.py). In short: the column branch of `AxialSelfAttention` never permuted `(B, Ny, Nx, D) -> (B, Nx, Ny, D)` before reshaping, so it attended over rows twice and scattered the second result transposed. `reshape` never raised because the element count factors identically. Every UrbanFormer-Field number prior to this run, including the original headline R2 = 0.8284, was produced with streamwise coupling only.
 
-The result stands. The mechanism attributed to it does not. Weights do not transfer, so WP3 is a retrain. It also restores WP-isolation: WP3 and WP4 now differ in `MORPH_MODE` alone, whereas before they differed in `MORPH_MODE` *and* axial correctness, which is where WP4's apparent `+0.386 dR2` came from.
+The result stands. The mechanism attributed to it does not. Weights do not transfer, so UrbanFormer-Field is a retrain. It also restores stage-isolation: UrbanFormer-Field and the morphology variant now differ in `MORPH_MODE` alone, whereas before they differed in `MORPH_MODE` *and* axial correctness, which is where the morphology variant's apparent `+0.386 dR2` came from.
 
 ---
 
-## WP4 — Morphology-aware UrbanFormer
+## Stage 4 — UrbanFormer-Field + morphology
 
 ```
 G_theta(B, m, x, y) -> u_bar(x, y, h_m/2) / U_ref
 ```
 
-Single isolated variable: `MORPH_MODE ∈ {none, token, query}`. Everything else (encoder, relative cross-attention, axial self-attention, residual depth, grad + spectral loss, augmentation) frozen at the UF-F config, so any R2 change is attributable to `m`.
+Single isolated variable: `MORPH_MODE ∈ {none, token, query}`. Everything else (encoder, relative cross-attention, axial self-attention, residual depth, grad + spectral loss, augmentation) frozen at the UrbanFormer-Field config, so any R2 change is attributable to `m`.
 
 | `MORPH_MODE` | how `m` enters | roadmap |
 |---|---|---|
-| `none` | not used, reproduces WP3 UF-F | control (A) |
+| `none` | not used, reproduces UrbanFormer-Field | control (A) |
 | `token` | `m -> MLP -> global token`, prepended to the building set | main (B) |
 | `query` | `m` concatenated to every query feature | (C) |
 
@@ -150,41 +156,41 @@ Recipe corrections held constant across every run, so the morphology comparison 
 
 ### Decision rule, stated before the run
 
-> WP4 succeeds only if `token` (or `query`) beats `none` on R2 **and** the gain dies under shuffle (`R2(shuffle) ≈ R2(none)`). If shuffle keeps the gain, it was the morphology head's extra parameters, not the information.
+> The morphology variant succeeds only if `token` (or `query`) beats `none` on R2 **and** the gain dies under shuffle (`R2(shuffle) ≈ R2(none)`). If shuffle keeps the gain, it was the morphology head's extra parameters, not the information.
 
 `token` = 0.8358, `none` = 0.8461. The first condition failed. The shuffle control was never in play.
 
 **Conclusion: honest null.** The building-token set already encodes everything `m` adds. `lambda_p`, `lambda_f`, `h_m`, `h_rms`, the height moments and `gamma_m` are all computable from the tokens, and the encoder evidently computes them. A global descriptor vector is not a free source of information when the model already sees the objects the descriptors summarize.
 
-The binding constraint is therefore layout generalization (val floor ≈ 0.38), not representation. That floor is a representation lever, out of scope for WP4.
+The binding constraint is therefore layout generalization (val floor ≈ 0.38), not representation. That floor is a representation lever, out of scope for the morphology variant.
 
 **Remaining.** `query` and `token+shuffle` are specified in the matrix but not yet logged to `wp4_results.json`. Each run is a separate Kaggle session (dual T4 runs two configs in parallel). The null rests on `token` vs `none` alone until those land.
 
 ---
 
-## WP5 — Generalization evaluation
+## Stage 5 — Generalization study
 
-Evaluation only. All four models retrained from scratch on the identical core split (`core_train` = 2,518, `core_val` = 539, `core_test` = 541), so any delta is architecture, not training-set exposure. Every OOD number is read relative to `core_test`, never relative to the original WP1 to WP4 test numbers, which used the larger 3,657-case train set.
+Evaluation only. All four models retrained from scratch on the identical core split (`core_train` = 2,518, `core_val` = 539, `core_test` = 541), so any delta is architecture, not training-set exposure. Every OOD number is read relative to `core_test`, never relative to the original stage 1–4 test numbers, which used the larger 3,657-case train set.
 
 ### Provenance guard
 
-A checkpoint from an earlier run scores against a training set it never saw, so its row is not comparable. WP5 refuses it. Two kinds of evidence, in order of strength:
+A checkpoint from an earlier run scores against a training set it never saw, so its row is not comparable. The generalization study refuses it. Two kinds of evidence, in order of strength:
 
 1. **Positive.** The config states what it was trained on (`WP`, `SPLIT`, `N_TRAIN`). Dispositive.
-2. **Negative.** The config lacks keys the WP5-era training script always writes (`LR_SCHED`, `LR_MIN`, `T_MAX`, `WEIGHT_DECAY`, `M_DIM`). A backstop for pre-provenance checkpoints.
+2. **Negative.** The config lacks keys the stage-5-era training script always writes (`LR_SCHED`, `LR_MIN`, `T_MAX`, `WEIGHT_DECAY`, `M_DIM`). A backstop for pre-provenance checkpoints.
 
-Plus one check that makes the WP4 row mean anything: a `WP4-morph` checkpoint with `MORPH_MODE = "none"` is silently a second WP3 run, and the headline WP4 finding would then be an artifact of the shipped file rather than of the model. `EXPECT_MORPH_MODE` catches it.
+Plus one check that makes the morphology-variant row mean anything: a `WP4-morph` checkpoint (stage 4) with `MORPH_MODE = "none"` is silently a second UrbanFormer-Field run, and the headline morphology finding would then be an artifact of the shipped file rather than of the model. `EXPECT_MORPH_MODE` catches it.
 
-There is no deny-list. `MULTISCALE` was briefly treated as a stale-checkpoint fingerprint, but it is a legitimate WP3 architecture lever. It correlated with staleness only because one stale artifact happened to carry it. The missing-keys test rejects that artifact on its own.
+There is no deny-list. `MULTISCALE` was briefly treated as a stale-checkpoint fingerprint, but it is a legitimate UrbanFormer-Field architecture lever. It correlated with staleness only because one stale artifact happened to carry it. The missing-keys test rejects that artifact on its own.
 
 ### Core test
 
 | model | RMSE | MAE | R2 | rel-L2 | Spearman |
 |---|---:|---:|---:|---:|---:|
 | U-Net | 0.8457 | 0.4900 | 0.7129 | 0.4853 | 0.8755 |
-| WP2-pool | 1.3280 | 0.8819 | 0.2921 | 0.7620 | 0.5804 |
-| WP3-UFF | 0.6192 | 0.3722 | 0.8461 | 0.3553 | 0.9483 |
-| WP4-morph | 0.6397 | 0.3895 | 0.8358 | 0.3671 | 0.9451 |
+| Pooled + FiLM | 1.3280 | 0.8819 | 0.2921 | 0.7620 | 0.5804 |
+| UrbanFormer-Field | 0.6192 | 0.3722 | 0.8461 | 0.3553 | 0.9483 |
+| UF-Field + morph | 0.6397 | 0.3895 | 0.8358 | 0.3671 | 0.9451 |
 
 ### OOD regimes
 
@@ -195,27 +201,27 @@ Eight tails at `TAIL_PCT = 95`. `high_h_max` was dropped as degenerate on the qu
 | model | h_rms↑ | λf↑ | γ↑ | γ↓ | λp↑ | λp↓ | skew↑ | kurt↑ |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | U-Net | -0.0216 | +0.0193 | -0.0128 | -0.0561 | -0.0529 | +0.0018 | -0.0153 | +0.0115 |
-| WP2-pool | -0.0289 | +0.1997 | -0.1869 | +0.1082 | +0.0900 | -0.1095 | -0.0389 | +0.0402 |
-| WP3-UFF | -0.0124 | -0.0069 | -0.0208 | -0.0320 | -0.0351 | -0.0223 | -0.0073 | -0.0014 |
-| WP4-morph | -0.0140 | -0.0056 | -0.0324 | -0.0366 | -0.0314 | -0.0210 | -0.0088 | +0.0021 |
+| Pooled + FiLM | -0.0289 | +0.1997 | -0.1869 | +0.1082 | +0.0900 | -0.1095 | -0.0389 | +0.0402 |
+| UrbanFormer-Field | -0.0124 | -0.0069 | -0.0208 | -0.0320 | -0.0351 | -0.0223 | -0.0073 | -0.0014 |
+| UF-Field + morph | -0.0140 | -0.0056 | -0.0324 | -0.0366 | -0.0314 | -0.0210 | -0.0088 | +0.0021 |
 
-Note WP2-pool's positive deltas on `λf↑`, `γ↓` and `λp↑`. A model that has collapsed toward the conditional mean improves on regimes whose target variance is easier, which is a diagnostic of collapse rather than of robustness. Its robustness gap is *negative* (-0.0092) for the same reason. Do not read that row as generalization.
+Note the Pooled-token model's positive deltas on `λf↑`, `γ↓` and `λp↑`. A model that has collapsed toward the conditional mean improves on regimes whose target variance is easier, which is a diagnostic of collapse rather than of robustness. Its robustness gap is *negative* (-0.0092) for the same reason. Do not read that row as generalization.
 
 ### Ranking
 
 | model | core R2 | mean OOD R2 | robustness gap | worst regime | worst R2 |
 |---|---:|---:|---:|---|---:|
-| WP3-UFF | 0.8461 | 0.8288 | 0.0173 | λp↑ | 0.8110 |
-| WP4-morph | 0.8358 | 0.8173 | 0.0185 | γ↓ | 0.7991 |
+| UrbanFormer-Field | 0.8461 | 0.8288 | 0.0173 | λp↑ | 0.8110 |
+| UF-Field + morph | 0.8358 | 0.8173 | 0.0185 | γ↓ | 0.7991 |
 | U-Net | 0.7129 | 0.6972 | 0.0158 | γ↓ | 0.6568 |
-| WP2-pool | 0.2921 | 0.3014 | -0.0092 | γ↑ | 0.1053 |
+| Pooled + FiLM | 0.2921 | 0.3014 | -0.0092 | γ↑ | 0.1053 |
 
 ### Automated outcome read
 
-- UF-F ≥ U-Net on `core_test` -> the object-based representation matches and exceeds the rasterized CNN.
+- UrbanFormer-Field ≥ U-Net on `core_test` -> the object-based representation matches and exceeds the rasterized CNN.
 - Both degrade similarly on OOD (0.0185 vs 0.0158) -> the failure is data-driven, not architecture-driven.
 - Hard for all models: `γ↑` -> a structural limit of the surrogate approach on this dataset, not of any one model.
 
 ### Physics-oriented metrics
 
-Beyond aggregate R2, WP5 also reports `plane_avg_err`, `wake_rmse` (6 cells downstream), `canyon_rmse` (4 cells), `deficit_rmse`, and low/high-speed area errors at thresholds `u/U_ref` of 0.5 and 1.5. These say *where* each model fails, which is what a client's engineer actually asks about.
+Beyond aggregate R2, the generalization study also reports `plane_avg_err`, `wake_rmse` (6 cells downstream), `canyon_rmse` (4 cells), `deficit_rmse`, and low/high-speed area errors at thresholds `u/U_ref` of 0.5 and 1.5. These say *where* each model fails, which is what a client's engineer actually asks about.
