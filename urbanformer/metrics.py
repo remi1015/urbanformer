@@ -1,4 +1,4 @@
-"""Field-quality metrics for the UrbanFormer work packages (WP5 scope).
+"""Field-quality metrics for the UrbanFormer models (generalization study, stage 5).
 
 Pure metric functions over stacked fields ``(N, Ny, Nx)`` with a fluid mask:
 only fluid cells (``M > 0``) count, so building cells never enter any score.
@@ -7,9 +7,9 @@ only fluid cells (``M > 0``) count, so building cells never enter any score.
 * :func:`per_case_rmse`  -- one fluid-only RMSE per case (feeds the §5 analysis).
 * :func:`spatial_corr`   -- mean per-case Pearson correlation over fluid cells.
 
-The physics-oriented metrics (wake / canyon / deficit errors) read WP5 threshold
-constants (``WAKE_D``, ``CAN_D``, ``LOW_THR``, ``HI_THR``) and are ported with the
-WP5 evaluation notebook rather than here.
+The physics-oriented metrics (wake / canyon / deficit errors) read stage-5
+threshold constants (``WAKE_D``, ``CAN_D``, ``LOW_THR``, ``HI_THR``) and are
+ported with the generalization-study notebook rather than here.
 """
 
 from __future__ import annotations
@@ -77,7 +77,7 @@ def spatial_corr(P, T, M):
 
 
 # ===========================================================================
-# WP5 physics-oriented metrics
+# Stage-5 physics-oriented metrics
 # ===========================================================================
 # region thresholds (u / U_ref) and depths (cells)
 WAKE_D, CAN_D = 6, 4

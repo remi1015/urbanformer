@@ -1,7 +1,7 @@
 """
 Render the UrbanFormer-Field (UF-F) architecture diagram.
 
-Data-free: this figure documents the WP3/WP4 forward pass and can be regenerated
+Data-free: this figure documents the stage 3/4 forward pass and can be regenerated
 without the dataset or checkpoints. Writes docs/figures/architecture.png (and .svg).
 
     python scripts/make_arch_figure.py
@@ -59,7 +59,7 @@ def main() -> None:
     ax.set_ylim(0, 7.4)
     ax.axis("off")
 
-    ax.text(0.20, 7.06, "UrbanFormer-Field  (WP3 / WP4)", fontsize=17,
+    ax.text(0.20, 7.06, "UrbanFormer-Field  —  the flagship model", fontsize=17,
             weight="bold", color=INK)
     ax.text(0.20, 6.66,
             r"$G_\theta(B,\, m,\, x, y)\ \rightarrow\ \bar{u}(x, y,\ z{=}h_m/2)\,/\,U_{ref}$",

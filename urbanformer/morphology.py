@@ -1,6 +1,6 @@
-"""WP0 building extraction and morphological descriptors.
+"""Data-preparation (stage 0) building extraction and morphological descriptors.
 
-Ported faithfully from the WP0 preprocessing notebook. Every function here is
+Ported faithfully from the preprocessing notebook (stage 0). Every function here is
 pure: it takes arrays and returns values, with no file I/O. The per-case
 orchestration that loads the raw ``.npz`` and writes per-case ``.npy`` lives in
 the preprocessing script, not in this module.
@@ -163,7 +163,7 @@ def compute_alignedness(footprint, height_map, lambda_p, dx=DX):
 def compute_global_descriptors(height_map, dx=DX):
     """Canonical 8-vector and alignedness 5-vector for one height map.
 
-    Mirrors exactly what the WP0 loop writes to disk per case, minus the
+    Mirrors exactly what the preprocessing loop writes to disk per case, minus the
     externally supplied fields (``case_idx``, ``U_ref``).
 
     Returns

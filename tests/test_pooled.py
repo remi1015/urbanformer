@@ -1,7 +1,7 @@
-"""Regression tests for :mod:`urbanformer.models.pooled` (WP2).
+"""Regression tests for :mod:`urbanformer.models.pooled` (stage 2).
 
 Required invariant: the two models have exactly 464,769 (base) and 695,169
-(FiLM) parameters. These counts are the architectural fingerprint the WP2 report
+(FiLM) parameters. These counts are the architectural fingerprint the stage-2 report
 quotes, so a change to any layer width is caught here. The suite also pins the
 forward contract, that mean-pooling ignores padded tokens, and that FiLM starts
 as identity modulation.

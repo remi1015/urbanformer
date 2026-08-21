@@ -1,11 +1,14 @@
 """Command-line evaluation entry point.
 
-    python -m urbanformer.eval --wp 5                    # core-test table, all models
-    python -m urbanformer.eval --wp 5 --physics         # + physics-oriented metrics
-    python -m urbanformer.eval --wp 3 --resolution-transfer
+    python -m urbanformer.eval --stage 5                 # core-test table, all models
+    python -m urbanformer.eval --stage 5 --physics       # + physics-oriented metrics
+    python -m urbanformer.eval --stage 3 --resolution-transfer
 
-Scores checkpoints the same way the WP5 notebook does: fluid-cell field metrics
-(:mod:`urbanformer.metrics`) behind the provenance guard
+Stage 5 is the **generalization study** (cross-model, in- vs out-of-distribution);
+stages 1-4 score a single model. (``--wp`` is accepted as an alias of ``--stage``.)
+
+Scores checkpoints the same way the generalization-study notebook does: fluid-cell
+field metrics (:mod:`urbanformer.metrics`) behind the provenance guard
 (:mod:`urbanformer.provenance`), so a stale or mislabeled checkpoint cannot
 occupy a row. Two harnesses that the notebooks leave implicit are exposed here as
 first-class flags:
@@ -82,20 +85,22 @@ def _report_missing(mode: str) -> None:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Evaluate UrbanFormer checkpoints.")
-    ap.add_argument("--wp", type=int, required=True, choices=sorted((1, 2, 3, 4, 5)),
-                    help="work package to score; 5 is the cross-model comparison")
+    ap = argparse.ArgumentParser(description="Evaluate UrbanFormer models (study stages).")
+    ap.add_argument("--stage", "--wp", dest="wp", type=int, required=True,
+                    choices=sorted((1, 2, 3, 4, 5)),
+                    help="1-4 score a single model; 5 is the generalization study "
+                         "(cross-model, in- vs out-of-distribution). --wp is an alias")
     ap.add_argument("--physics", action="store_true",
                     help="also emit the physics-oriented metric table")
     ap.add_argument("--resolution-transfer", action="store_true",
-                    help="score UF-F at native vs stride-2 query resolution")
+                    help="score UrbanFormer-Field at native vs stride-2 query resolution")
     args = ap.parse_args(argv)
 
     if args.wp == 5:
-        tag = "WP5 cross-model"
+        label = "Generalization study (cross-model)"
     else:
-        tag = get_config(args.wp).tag
-    print(f"[{tag}] evaluation requested"
+        label = get_config(args.wp).name
+    print(f"[stage {args.wp}] {label}: evaluation requested"
           + (" (+physics)" if args.physics else "")
           + (" (+resolution-transfer)" if args.resolution_transfer else ""))
 

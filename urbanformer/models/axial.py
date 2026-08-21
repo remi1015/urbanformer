@@ -1,5 +1,5 @@
 """
-Axial self-attention over the query grid (WP3, UrbanFormer-Field).
+Axial self-attention over the query grid (UrbanFormer-Field, stage 3).
 
 This is the load-bearing lever of UF-F. Query-to-building cross-attention gives
 each query point the right buildings but no awareness of its neighbours, so the

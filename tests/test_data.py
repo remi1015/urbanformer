@@ -1,10 +1,10 @@
-"""Regression tests for :mod:`urbanformer.data` (WP0).
+"""Regression tests for :mod:`urbanformer.data` (stage 0, data preparation).
 
 Two invariants anchor this suite:
 
 1. Every token entry lies in ``[0, 1]`` (per-axis / global-height normalization).
 2. No case appears in two splits, and the three splits partition all cases;
-   the split is deterministic and reproduces the WP0 notebook exactly.
+   the split is deterministic and reproduces the preprocessing notebook exactly.
 """
 
 import numpy as np
@@ -123,7 +123,7 @@ def test_split_is_deterministic():
 
 
 # ---------------------------------------------------------------------------
-# UNetMidDataset: tensor contract (WP1)
+# UNetMidDataset: tensor contract (stage 1)
 # ---------------------------------------------------------------------------
 def _write_case(case_dir, Ny, Nx, rng):
     case_dir.mkdir(parents=True)
@@ -165,7 +165,7 @@ def test_unet_dataset_coordinate_channels_are_cell_centered(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# TokenDataset + collate_fn (WP2)
+# TokenDataset + collate_fn (stage 2)
 # ---------------------------------------------------------------------------
 def _write_token_case(case_dir, Ny, Nx, n_buildings, rng):
     case_dir.mkdir(parents=True)

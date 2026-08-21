@@ -1,7 +1,7 @@
-"""Pooled building-token Transformers (WP2, base vs Fourier/FiLM).
+"""Pooled building-token Transformers (stage 2, base vs Fourier/FiLM).
 
 Two models that share a token encoder and differ only in the decoder, isolating
-the decoder as the variable in the WP2 comparison:
+the decoder as the variable in the stage-2 comparison:
 
 * :class:`PooledTransformer` -- base. Building tokens -> Transformer encoder ->
   masked mean-pool to a single geometry vector ``z_geom`` -> plain MLP decoder on
@@ -13,7 +13,7 @@ the decoder as the variable in the WP2 comparison:
 
 The single pooled ``z_geom`` is the deliberate bottleneck: one latent vector
 cannot carry per-location geometry, which is what motivates the per-query
-cross-attention of WP3.
+cross-attention of UrbanFormer-Field (stage 3).
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ FOURIER_SEED    = 0      # fixes B so the feature map is reproducible
 
 
 class PooledTransformer(nn.Module):
-    """WP2 base: pooled building-token Transformer + plain MLP coordinate decoder."""
+    """Base: pooled building-token Transformer + plain MLP coordinate decoder."""
 
     def __init__(self, token_dim=TOKEN_DIM, d_model=D_MODEL, nhead=N_HEAD,
                  num_layers=NUM_LAYERS, dim_feedforward=DIM_FEEDFORWARD,
@@ -128,15 +128,15 @@ class FiLMBlock(nn.Module):
 
 
 class PooledTransformerFiLM(nn.Module):
-    """WP2-FiLM: same token encoder + mean-pool as WP2-base, but the decoder uses
-    Fourier-feature query embedding and FiLM conditioning on ``z_geom``."""
+    """FiLM variant: same token encoder + mean-pool as the base model, but the
+    decoder uses Fourier-feature query embedding and FiLM conditioning on ``z_geom``."""
 
     def __init__(self, token_dim=TOKEN_DIM, d_model=D_MODEL, nhead=N_HEAD,
                  num_layers=NUM_LAYERS, dim_feedforward=DIM_FEEDFORWARD,
                  dropout=DROPOUT, dec_hidden=DEC_HIDDEN,
                  num_freqs=NUM_FOURIER, fourier_scale=FOURIER_SCALE):
         super().__init__()
-        # --- token embedding + encoder (identical to WP2-base) ---
+        # --- token embedding + encoder (identical to the base model) ---
         self.token_embed = nn.Linear(token_dim, d_model)
         enc_layer = nn.TransformerEncoderLayer(
             d_model=d_model, nhead=nhead, dim_feedforward=dim_feedforward,
@@ -152,7 +152,7 @@ class PooledTransformerFiLM(nn.Module):
         self.head = nn.Linear(dec_hidden, 1)
 
     def encode(self, tokens, padding_mask):
-        """Identical to WP2-base."""
+        """Identical to the base model."""
         x = self.token_embed(tokens)
         x = self.transformer(x, src_key_padding_mask=padding_mask)
         real = (~padding_mask).float().unsqueeze(-1)

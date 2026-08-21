@@ -39,7 +39,7 @@ def _kaggle(dataset: str, dest: Path) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--raw", action="store_true", help="raw .npz (5,225 LBM cases)")
-    ap.add_argument("--splits", action="store_true", help="WP5 core split case lists")
+    ap.add_argument("--splits", action="store_true", help="core split case lists (stage 5)")
     ap.add_argument("--checkpoints", action="store_true", help="the four core retrains")
     ap.add_argument("--all", action="store_true")
     args = ap.parse_args()

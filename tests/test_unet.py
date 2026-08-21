@@ -1,4 +1,4 @@
-"""Regression tests for :mod:`urbanformer.models.unet` (WP1).
+"""Regression tests for :mod:`urbanformer.models.unet` (stage 1).
 
 Required invariant: the odd 78 -> 39 -> 19 -> 9 encoder pyramid round-trips, so a
 (B, 4, 78, 78) input yields a (B, 1, 78, 78) prediction. These are structural

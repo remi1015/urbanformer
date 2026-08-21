@@ -1,13 +1,13 @@
-"""Training losses for the UrbanFormer field-prediction work packages.
+"""Training losses for the UrbanFormer field-prediction models.
 
-WP1 (UrbanFormer-Mid, U-Net baseline) trains against :func:`masked_mse`: plain
-mean squared error restricted to fluid cells, so solid (building) cells never
-enter the gradient. This is the exact loss that produced the WP1 headline
-numbers.
+The U-Net baseline (stage 1) trains against :func:`masked_mse`: plain mean
+squared error restricted to fluid cells, so solid (building) cells never enter
+the gradient. This is the exact loss that produced the stage-1 headline numbers.
 
-The richer WP3 field loss (masked MSE + gradient + optional spectral + tail
-weighting, ``masked_field_loss`` with its ``make_radial_bins`` / ``_radial_psd``
-helpers) is coupled to the WP3 training config and is ported alongside WP3.
+The richer UrbanFormer-Field loss (stage 3; masked MSE + gradient + optional
+spectral + tail weighting, ``masked_field_loss`` with its ``make_radial_bins`` /
+``_radial_psd`` helpers) is coupled to the UrbanFormer-Field training config and
+is ported alongside it.
 """
 
 from __future__ import annotations
@@ -38,11 +38,11 @@ def masked_mse(pred, target, mask):
 
 
 # ===========================================================================
-# WP3 field loss: masked tail-MSE + gradient + radial-spectral
+# UrbanFormer-Field loss (stage 3): masked tail-MSE + gradient + radial-spectral
 # ===========================================================================
-import torch as _torch  # noqa: E402  (kept local to the WP3 section)
+import torch as _torch  # noqa: E402  (kept local to the field-loss section)
 
-# --- WP3 loss configuration (the UF-F defaults that produced the flagship) ---
+# --- UrbanFormer-Field loss configuration (the defaults that produced the flagship) ---
 TAIL_ALPHA    = 0.3     # tail up-weighting exponent (0 disables)
 LAMBDA_GRAD   = 0.5     # weight on the finite-difference gradient term
 SPECTRAL_LOSS = True    # include the radial-PSD term
@@ -71,7 +71,7 @@ def make_radial_bins(Ny, Nx, nbin=NBIN, device="cpu"):
 
 
 def masked_field_loss(pred, target, fluid, rbin=None, nbin=NBIN):
-    """UF-F training loss over fluid cells (WP3).
+    """UrbanFormer-Field training loss over fluid cells (stage 3).
 
     pred / target / fluid: (B, Ny, Nx). Combines a tail-weighted masked MSE, a
     finite-difference gradient term, and an optional radial-PSD (spectral) term

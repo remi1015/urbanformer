@@ -7,7 +7,7 @@ These tests pin the parts of ``urbanformer.train`` / ``urbanformer.eval`` /
   package, so the model / loss / optimizer plumbing is self-verifying on CPU.
 * :func:`urbanformer.config.build_model` returns the right architecture (checked
   by parameter-count fingerprint) and the morphology token genuinely adds
-  parameters (WP4 vs WP3).
+  parameters (stage 4 vs stage 3).
 * the pure ``eval`` helpers (grid subsampling, markdown table formatting) behave.
 """
 from __future__ import annotations
@@ -21,7 +21,7 @@ from urbanformer.eval import format_metrics_table, subsample_grid_indices
 from urbanformer.train import smoke_step
 
 
-# --- training plumbing (one forward+backward per work package) -------------
+# --- training plumbing (one forward+backward per stage) --------------------
 @pytest.mark.parametrize("wp", [1, 2, 3, 4])
 def test_smoke_step_runs_for_each_wp(wp):
     loss = smoke_step(wp)
@@ -33,13 +33,13 @@ def test_smoke_step_runs_for_each_wp(wp):
 # --- model factory ---------------------------------------------------------
 def test_build_model_param_fingerprints():
     """The factory must build the documented architectures, not lookalikes."""
-    assert count_params(build_model(1)) == 1_927_297     # WP1 U-Net
-    assert count_params(build_model(3)) == 1_633_969     # WP3 UrbanFormer-Field
+    assert count_params(build_model(1)) == 1_927_297     # stage 1, U-Net
+    assert count_params(build_model(3)) == 1_633_969     # stage 3, UrbanFormer-Field
 
 
 def test_morph_token_adds_parameters_and_restores_the_lever():
-    """WP4 (global morphology token) has strictly more params than WP3, and the
-    module-level MULTISCALE lever is not leaked across builds."""
+    """Stage 4 (global morphology token) has strictly more params than stage 3, and
+    the module-level MULTISCALE lever is not leaked across builds."""
     import urbanformer.models.field as field
 
     assert field.MULTISCALE is False
@@ -52,10 +52,21 @@ def test_morph_token_adds_parameters_and_restores_the_lever():
 def test_config_tags_match_provenance_expectations():
     from urbanformer.provenance import EXPECTED_MORPH
 
+    # `tag` is the stable internal provenance identifier; it must stay in sync
+    # with the guard even though humans now see `name` instead.
     assert get_config(3).tag == "WP3-UFF"
     assert get_config(4).tag == "WP4-morph"
     assert get_config(3).morph_mode == EXPECTED_MORPH["WP3-UFF"]
     assert get_config(4).morph_mode == EXPECTED_MORPH["WP4-morph"]
+
+
+def test_config_exposes_readable_names():
+    assert get_config(1).name == "U-Net baseline"
+    assert get_config(3).name == "UrbanFormer-Field"
+    # every stage carries a non-empty one-line description
+    for wp in (1, 2, 3, 4):
+        cfg = get_config(wp)
+        assert cfg.name and cfg.desc
 
 
 def test_get_config_rejects_unknown_wp():

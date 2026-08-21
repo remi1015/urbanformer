@@ -1,4 +1,4 @@
-"""U-Net baseline for mid-canopy velocity (WP1, UrbanFormer-Mid).
+"""U-Net baseline for mid-canopy velocity (stage 1).
 
 A 3-level U-Net mapping the 4-channel raster input
 (``height_map``, ``footprint_mask``, ``x_grid``, ``y_grid``) to the single-channel

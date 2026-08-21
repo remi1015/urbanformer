@@ -1,12 +1,16 @@
 """Command-line training entry point.
 
-    python -m urbanformer.train --wp 3            # train UrbanFormer-Field
-    python -m urbanformer.train --wp 1 --epochs 5 # short U-Net run
+    python -m urbanformer.train --stage 3          # train UrbanFormer-Field
+    python -m urbanformer.train --stage 1 --epochs 5   # short U-Net run
+
+Stages are the models in the study (see :mod:`urbanformer.config`): 1 U-Net
+baseline, 2 Pooled-token Transformer, 3 UrbanFormer-Field, 4 UF-Field +
+morphology. (``--wp`` is accepted as an alias of ``--stage``.)
 
 The notebooks remain the exploratory source of truth; this module is the thin,
-tested driver that reproduces a work package's run in one command. It resolves
-the per-WP config (:mod:`urbanformer.config`), builds the matching model, loss,
-and dataset, and writes a provenance-stamped checkpoint.
+tested driver that reproduces one stage's run in a single command. It resolves
+the per-stage config (:mod:`urbanformer.config`), builds the matching model,
+loss, and dataset, and writes a provenance-stamped checkpoint.
 
 With no dataset present it does not fail obscurely: it reports exactly which
 paths are missing and how to fetch them, then exits cleanly. The per-WP
@@ -58,7 +62,7 @@ STEP = {"unet": _unet_step, "pooled": _pooled_step, "field": _field_step}
 
 
 def smoke_step(wp: int) -> float:
-    """Run one forward+backward on synthetic tensors for a work package.
+    """Run one forward+backward on synthetic tensors for a study stage.
 
     Proves the model/loss/optimizer wiring for ``wp`` runs on CPU without any
     dataset. Returns the scalar loss. Used by the test-suite as the data-free
@@ -109,9 +113,11 @@ def _report_missing() -> None:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Train one UrbanFormer work package.")
-    ap.add_argument("--wp", type=int, required=True, choices=sorted((1, 2, 3, 4)),
-                    help="work package to train")
+    ap = argparse.ArgumentParser(description="Train one UrbanFormer model (study stage).")
+    ap.add_argument("--stage", "--wp", dest="wp", type=int, required=True,
+                    choices=sorted((1, 2, 3, 4)),
+                    help="model to train: 1 U-Net, 2 Pooled-token, 3 UrbanFormer-Field, "
+                         "4 UF-Field + morphology (--wp is an alias)")
     ap.add_argument("--epochs", type=int, default=None, help="override epoch count")
     ap.add_argument("--batch-size", type=int, default=None)
     ap.add_argument("--out", type=Path, default=None, help="checkpoint output path")
@@ -121,12 +127,12 @@ def main(argv=None) -> int:
 
     cfg = get_config(args.wp)
     model = build_model(args.wp)
-    print(f"[{cfg.tag}] {cfg.kind} model, {count_params(model):,} parameters, "
-          f"morph_mode={cfg.morph_mode!r}")
+    print(f"[stage {cfg.wp}] {cfg.name} — {cfg.desc}")
+    print(f"          {count_params(model):,} parameters, morph_mode={cfg.morph_mode!r}")
 
     if args.smoke:
         loss = smoke_step(args.wp)
-        print(f"[{cfg.tag}] smoke step ok, loss={loss:.4f}")
+        print(f"[stage {cfg.wp}] {cfg.name}: smoke step ok, loss={loss:.4f}")
         return 0
 
     if not _data_present():

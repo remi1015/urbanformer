@@ -1,4 +1,4 @@
-"""Regression tests for :mod:`urbanformer.models.field` (WP3, flagship UF-F).
+"""Regression tests for :mod:`urbanformer.models.field` (stage 3, flagship UrbanFormer-Field).
 
 Pins the architectural fingerprint (1,633,969 params -- the count behind the
 flagship R2 = 0.8461), the forward contract, the attention-return path, and the
