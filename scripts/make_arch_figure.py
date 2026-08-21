@@ -74,9 +74,9 @@ def main() -> None:
         IO, IO_E, fs=9.6, title="Query points")
 
     # ---- encoder ----
-    box(ax, 3.05, 4.30, 2.60, 1.60,
-        "linear embed →\n3× Transformer\nencoder layers\n(permutation-\ninvariant set)",
-        ENC, ENC_E, fs=9.4, title="Token Encoder")
+    box(ax, 3.05, 4.25, 2.60, 1.68,
+        "linear embed →\n3× Transformer\nencoder layers\n(permutation-invariant set)",
+        ENC, ENC_E, fs=9.2, title="Token Encoder")
     ax.text(4.35, 4.08, "memory", fontsize=9.0, color=ENC_E,
             ha="center", style="italic")
 
